@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/seu/lio-sam/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/seu/lio-sam/src/LIO-SAM/include/**",
+        "/home/seu/GAO/MOT/src/Multi-Object-Tracking/mot_tracking/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

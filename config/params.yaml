@@ -1,0 +1,22 @@
+
+# detection
+scan_range: 25.0
+min_pt: 50
+max_pt: 1000
+min_size_length: 0.15
+min_size_width: 0.1
+min_size_height: 0.4
+max_size_length: 1.8
+max_size_width: 1.5
+max_size_height: 1.8
+Horizon_SCAN: 1024
+N_SCAN: 64
+downsampleRate: 2
+
+
+  # # grid map
+  # z_min = -0.6
+  # z_max = 1.5
+  # localresolution = 0.2
+  # globalmapsize = 300
+  # globalresolution = 0.2

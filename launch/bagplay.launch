@@ -1,0 +1,13 @@
+<launch>
+    <!-- 指定rosbag文件的路径 -->
+    <arg name="bag_file" default="/home/20231124_1_2023-11-24-17-45-48.bag" />
+
+    <node name="rosbag_play" pkg="rosbag" type="play" args="-d 2 -r 1.0 -l $(arg bag_file)" output="screen">
+        <!-- 参数解释：
+            -d 2：在开始播放前等待2秒
+            -r 1.0：播放速率为1.0
+            -l：循环播放
+            $(arg bag_file)：rosbag文件的路径
+        -->
+    </node>
+</launch>

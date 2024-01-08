@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<!-- <rosparam file = "$(find mot_tracking)/config/params.yaml" command="load"/> -->
+
+<rosparam command="load" file="$(find mot_tracking)/config/params.yaml" />
+<node pkg = "mot_tracking" type = "tracking_and_mapping" name = "tracking_and_mapping" output = "screen"/>
+
+<!-- <node pkg = "rviz" type = "rviz" name = "tracking_and_mapping_rviz" args = "-d $(find mot_tracking)/launch/rviz.rviz"/> -->
+
+<!-- <node name="republish" type="republish" pkg="image_transport" args="compressed in:=/zed/zed_node/rgb/image_rect_color raw out:=/zed/zed_node/rgb/image_rect_color"  output="screen" respawn="true"/> -->
+
+</launch>
