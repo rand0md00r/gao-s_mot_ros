@@ -177,8 +177,8 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 		visualization_msgs::Marker marker;
 		marker.header.stamp = timeLaserInfoStamp;
 		marker.header.frame_id = "os_sensor";
-		marker.ns = "";
-		marker.id = marker_id;
+		marker.ns = to_string(marker_id);
+		marker.id = 0;
 		marker.lifetime = ros::Duration(3.2);
 		marker.type = visualization_msgs::Marker::CUBE;
 		marker.action = visualization_msgs::Marker::ADD;
