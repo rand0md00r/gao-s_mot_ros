@@ -8,10 +8,10 @@
 物体追踪：对检测到的物体进行追踪，并发布追踪结果到 /mot_tracking/box 话题。
 地图构建：暂未实现。
 
-## 话题输入/输出
-·输入：
+## Topic输入/输出
+### 输入：
 /centerpoint/dets：物体检测结果，类型为 visualization_msgs::MarkerArray。
-·输出：
+### 输出：
 /mot_tracking/box：物体追踪结果，类型为 visualization_msgs::MarkerArray。
 
 ## 安装运行方法
@@ -37,5 +37,5 @@ roslaunch mot_tracking track.launch
 ## 致谢
 本项目的部分代码参考了[Multi-Object-Tracking](https://github.com/wangx1996/Multi-Object-Tracking.git)项目。我们对原作者的贡献表示感谢。
 
-许可证
+## 许可证
 此项目遵循 MIT 许可证。
