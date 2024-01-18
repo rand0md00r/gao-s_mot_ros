@@ -52,7 +52,7 @@ public:
 
 	void manage_tracks(float& time);
 
-	void associate(Detection& _selected_detections, cv::Mat& _q, 
+	bool associate(Detection& _selected_detections, cv::Mat& _q, 
 			const Detection& _detections);
 	Matrices generate_hypothesis(const cv::Mat& _q); //假设矩阵
 

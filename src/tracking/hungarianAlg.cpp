@@ -1,5 +1,6 @@
 #include "hungarianAlg.h"
 #include <limits>
+#include <ros/ros.h>
 
 AssignmentProblemSolver::AssignmentProblemSolver()
 {
@@ -56,7 +57,12 @@ void AssignmentProblemSolver::assignmentoptimal(assignments_t& assignment, track
 	for (size_t row = 0; row < nOfElements; row++)
 	{
 		track_t value = distMatrixIn[row];
-		assert(value >= 0);
+		// assert(value >= 0);
+		if(std::isnan(value))
+		{
+			ROS_WARN("value is nan, set to 0");
+			distMatrix[row] = 0.0;
+		}
 		distMatrix[row] = value;
 	}
 

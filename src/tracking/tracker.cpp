@@ -4,10 +4,34 @@
  * reference:
  */
 #include "cal_iou.h"
+#include <ros/ros.h>
+
+inline float mahalanobisDist(const Eigen::VectorXd &_x1, const Eigen::VectorXd &_x2, const Eigen::MatrixXd &_S)
+{
+	Eigen::VectorXd diff = _x1 - _x2;
+	// if (diff.isZero()) {
+	// 	return 0.0f;
+	// }
+	for(int i = 0; i < diff.size(); ++i){
+		if(std::isnan(diff(i)) || std::isnan(_x1(i)) || std::isnan(_x2(i)) || std::isnan(_S(i, i))){
+			ROS_DEBUG("diff %f", diff(i));
+			ROS_DEBUG("x1 %f", _x1(i));
+			ROS_DEBUG("x2 %f", _x2(i));
+			ROS_DEBUG("S %f", _S(i, i));
+			return 0.0f;
+		}
+	}
+	return sqrt(diff.transpose() * _S.inverse() * diff);
+}
 
 inline float euclideanDist(const Eigen::VectorXd &_p1, const Eigen::VectorXd &_p2)
 {
-	return sqrt((_p1(0) - _p2(0)) * (_p1(0) - _p2(0)) + (_p1(1) - _p2(1)) * (_p1(1) - _p2(1)));
+	float diffX = _p1(0) - _p2(0);
+	float diffY = _p1(1) - _p2(1);
+	if (diffX == 0.0f && diffY == 0.0f) {
+		return 0.0f;
+	}
+	return sqrt(diffX * diffX + diffY * diffY);
 }
 
 void setupdate(std::set<int> &setin, int input)
@@ -231,8 +255,12 @@ void Tracker::track(const Detection &detections, float &time, std::vector<Eigen:
 			track->Prediction(time); // 预测一下子，原来age=0
 		}
 		std::vector<track_ptr> prun_tracks;
-		associate(selected_detections, q, detections); // onfirmed_tracks_与detections计算关联矩阵 马氏距离欧式距离波门筛选  更新了not_associated_ 表示当前没关联上的检测
-
+		if (!associate(selected_detections, q, detections)) // onfirmed_tracks_与detections计算关联矩阵 马氏距离欧式距离波门筛选  更新了not_associated_ 表示当前没关联上的检测
+		{
+			ROS_WARN("associate error, return false, skip this frame.");
+			return;
+		}
+			
 		if (q.total() == 0)
 		{ // total返回元素总数 一个都没关联上?
 			for (auto &track : confirmed_tracks_)
@@ -319,34 +347,7 @@ void Tracker::track(const Detection &detections, float &time, std::vector<Eigen:
 			}
 		}
 
-		/*std::cout<<"q \n "<<q<<"\n q.total() "<<q.total()<<std::endl;
-	if(q.total()==0){
-		for(auto& track:confirmed_tracks_){
-			track->MarkMissed();
-		}
-	}else{
-		MeaisAsso = analyze_tracks(q);//分析哪些measure没有关联
-		const Matrices& association_matrices = generate_hypothesis(q);//生成假设矩阵
-
-		Eigen::MatrixXd beta = joint_probability(association_matrices, selected_detections);//JPDAF
-
-		std::cout<<"########## BETA ##########\n"<<beta<<std::endl;
-
-		int i=0;
-		for(const auto& track:confirmed_tracks_){
-			std::cout<<"MeaisAsso "<<MeaisAsso[i]<<std::endl;
-			if(MeaisAsso[i]){
-				std::vector<Eigen::VectorXd> Zv;
-				for(auto det : selected_detections){
-					Zv.push_back(det.position);
-				}
-				track->Update(Zv, beta.col(i), beta(beta.rows() - 1, i), time);//TODO change the imm_ukf
-			}else{
-				track->MarkMissed();
-			}
-			++i;
-		}
-	}*/
+	
 
 		std::vector<int> final_select;							 // selected_detections的大小，存放剪枝后的tracker id
 		pruning(selected_detections, final_select, prun_tracks); // TODO 剪枝  顺便对匹配成功的track进行更新
@@ -511,7 +512,7 @@ void Tracker::track(const Detection &detections, float &time, std::vector<Eigen:
 } // end track
 
 // 计算关联矩阵
-void Tracker::associate(Detection &_selected_detections, cv::Mat &_q,
+bool Tracker::associate(Detection &_selected_detections, cv::Mat &_q,
 						const Detection &_detections)
 {
 	// std::cout<<"#################### TRACKER ASSOCISTATE #########################"<<std::endl;
@@ -548,14 +549,29 @@ void Tracker::associate(Detection &_selected_detections, cv::Mat &_q,
 			const Eigen::MatrixXd &Sin = track->S().inverse(); // TODO GET MEASURE COVARIANCE
 			cv::Mat S_cv;
 			cv::eigen2cv(Sin, S_cv);
-			const double &mah = cv::Mahalanobis(tr_cv, det_cv, S_cv);  // 计算马氏距离
+
+			// const double &mah = cv::Mahalanobis(tr_cv, det_cv, S_cv);  // 计算马氏距离
+			const double &mah = mahalanobisDist(tr, detection.position, Sin); // 计算马氏距离
 			const float &eucl = euclideanDist(detection.position, tr); // 计算欧式距离
 
 			// std::cout<<"########## TRACKER Mahalanobis euclideanDist ##########\n "<<mah<<" "<<eucl<<" "<<(param_.pi * param_.pg_sigma * std::sqrt(fabs(Sdt)))<<std::endl;
-			if (std::isnan(mah) || std::isnan(eucl) || std::isnan((param_.pi * param_.pg_sigma * std::sqrt(fabs(Sdt))))){
-				// std::abort();
+			if (std::isnan(mah) || std::isnan(eucl) || std::isnan((param_.pi * param_.pg_sigma * std::sqrt(fabs(Sdt)))))
+			{
+				ROS_DEBUG("mah %f", mah);
+				ROS_DEBUG("eucl %f", eucl);
+				ROS_DEBUG("fabs(Sdt) %f", fabs(Sdt));
+				std::cout << "tr :" << std::endl;
+				for(int i = 0; i < tr.size(); ++i){
+					std::cout << tr(i) << " ";
+				}
+				std::cout << "\n";
+				std::cout << "detection :" << std::endl;
+				for(int i = 0; i < detection.position.size(); ++i){
+					std::cout << detection.position(i) << " ";
+				}
 				std::cout << "*************************" << std::endl;
-				return;
+				
+				// return false;
 			}
 
 			// mah <= (param_.pi * param_.pg_sigma * std::sqrt(fabs(Sdt))) &&
@@ -583,6 +599,7 @@ void Tracker::associate(Detection &_selected_detections, cv::Mat &_q,
 	//_q矩阵中所有未使用的行和列删除，以减小矩阵的大小。
 	_q = _q(cv::Rect(0, 0, confirmed_tracks_.size() + 1, validationIdx));
 	////////////////////////////////////////////////////////////////////////////
+	return true;
 }
 
 // 分析关联后哪些track没有关联上
