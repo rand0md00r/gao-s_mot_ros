@@ -163,7 +163,6 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 	// publish marker
 	visualization_msgs::MarkerArrayPtr marker_array(new visualization_msgs::MarkerArray());
 	marker_array->markers.reserve(tracked.size() + 1);
-	int marker_id = 0;
 	for (auto &r : tracked)
 	{
 		if (!idcolor.count(int(r(0)))) // r(0)=id
@@ -177,8 +176,8 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 		visualization_msgs::Marker marker;
 		marker.header.stamp = timeLaserInfoStamp;
 		marker.header.frame_id = "os_sensor";
-		marker.ns = to_string(marker_id);
-		marker.id = 0;
+		marker.ns = to_string(r(0));
+		marker.id = r(0);
 		marker.lifetime = ros::Duration(3.2);
 		marker.type = visualization_msgs::Marker::CUBE;
 		marker.action = visualization_msgs::Marker::ADD;
@@ -194,8 +193,6 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 		marker.color.b = float(idcolor[int(r(0))][2]) / 255;
 		marker.color.a = 0.6f;
 		marker_array->markers.push_back(marker); 
-
-		++marker_id;
 	}
 	pubmarker.publish(marker_array);
 }
