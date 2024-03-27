@@ -101,7 +101,14 @@ bool init = false;
 unordered_map<int, vector<int>> idcolor;
 cv::RNG rng(12345);
 
+class boxPuber{
+public:
+	boxPuber(){};
+	tf::TransformListener tf_listener;
 
+	void pubMarker(std::vector<Eigen::VectorXd> tracked);
+	void detsHandler(const visualization_msgs::MarkerArrayConstPtr &detsMsg);
+};
 
 
 void readParams(ros::NodeHandle nh){
@@ -159,7 +166,7 @@ std::vector<Eigen::VectorXd> trackingFC(std::vector<Detect> dets, float relative
 }
 
 
-void pubMarker(std::vector<Eigen::VectorXd> tracked){
+void boxPuber::pubMarker(std::vector<Eigen::VectorXd> tracked){
 	// publish marker
 	visualization_msgs::MarkerArrayPtr marker_array(new visualization_msgs::MarkerArray());
 	marker_array->markers.reserve(tracked.size() + 1);
@@ -175,7 +182,7 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 		}
 		visualization_msgs::Marker marker;
 		marker.header.stamp = timeLaserInfoStamp;
-		marker.header.frame_id = "os_sensor";
+		marker.header.frame_id = "camera_init";
 		marker.ns = to_string(r(0));
 		marker.id = r(0);
 		marker.lifetime = ros::Duration(3.2);
@@ -198,14 +205,16 @@ void pubMarker(std::vector<Eigen::VectorXd> tracked){
 }
 
 
-void detsHandler(const visualization_msgs::MarkerArrayConstPtr &detsMsg)
+void boxPuber::detsHandler(const visualization_msgs::MarkerArrayConstPtr &detsMsg)
 {
 	detsQueue.push_back(*detsMsg);
 	visualization_msgs::MarkerArray centerpoint_dets = detsQueue.front();
 	detsQueue.pop_front();
 
 	std::vector<Detect> dets;
-
+	if(centerpoint_dets.markers.size() == 0){
+		return;
+	}
 	for(auto marker : centerpoint_dets.markers){
 		Detect det;
 		det.position = Eigen::VectorXd(2);
@@ -245,12 +254,14 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "tracking_mapping_node");
 	// Set the logger level
     if(ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) {ros::console::notifyLoggerLevelsChanged();}
-
+ 
 	ros::NodeHandle nh;
 	readParams(nh);
 
+	boxPuber boxpuber;
+
 	pubmarker = nh.advertise<visualization_msgs::MarkerArray>("/mot_tracking/box", 1);
-	subdets   = nh.subscribe<visualization_msgs::MarkerArray>("/centerpoint/dets", 1, detsHandler);
+	subdets   = nh.subscribe<visualization_msgs::MarkerArray>("/centerpoint/dets", 1, &boxPuber::detsHandler, &boxpuber);
 
 	ros::spin();
 
